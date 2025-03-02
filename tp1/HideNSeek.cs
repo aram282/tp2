@@ -4,7 +4,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Threading;
 
-namespace tp1
+namespace tp2
 {
     internal class HideNSeek
     {

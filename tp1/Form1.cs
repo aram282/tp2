@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace tp1
+namespace tp2
 {
     public partial class Form1 : Form
     {

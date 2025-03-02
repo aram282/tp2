@@ -1,7 +1,7 @@
 ﻿using System.Windows.Forms;
 using System.Drawing;
 
-namespace tp1
+namespace tp2
 {
     interface IEntity
     {

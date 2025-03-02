@@ -1,4 +1,4 @@
-﻿namespace tp1
+﻿namespace tp2
 {
     partial class Form1
     {

@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System;
 
-namespace tp1
+namespace tp2
 {
     internal class Circle : Entity
     {
