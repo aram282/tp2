@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System;
 
-namespace tp2
+namespace tp3
 {
     internal class Circle : Entity
     {
@@ -49,14 +49,24 @@ namespace tp2
                 _destination.Y = 0;
             else _destination.Y = client.Height - _height;
         }
-        public void MoveToBorderAsync(Rectangle client) //лаба 2
+        public void MoveToBorderAsync(Rectangle client, //лаба2
+            CancellationToken token) //лаба 3
         {
-            if (StatusChanged != null) StatusChanged($"круг номер {_id} начал движение. цвет {_color.Name}. ");
+            if (StatusChanged != null) StatusChanged.Invoke($"{_id}/{_color.Name}. ");
 
             while (true)
             {
-                MoveToBorder(client);
-                Thread.Sleep(_period);
+                try
+                {
+                    token.ThrowIfCancellationRequested();
+                    MoveToBorder(client);
+                    Thread.Sleep(_period);
+                }
+                catch (OperationCanceledException)
+                {
+                    StatusChanged.Invoke($"круг {_color.Name} все. ");
+                    break;
+                }
             }
         }
     }

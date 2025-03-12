@@ -4,11 +4,11 @@ using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace tp2
+namespace tp3
 {
     internal class Rect : Entity
     {
-        public event Action<Rectangle> CenterReached;
+        public event Action<Rectangle, CancellationToken> CenterReached;
         private bool _centerReached;    //лаба 2
         public Rect(int x, int y, int width, int height, Color color) : base(x, y, width, height, color)
         {
@@ -29,45 +29,9 @@ namespace tp2
             _destination.X = client.Width / 2 - _width / 2;
             _destination.Y = client.Height / 2 - _height / 2;
         }
-        public void MoveToCenter(Rectangle client)
+        //лаба 3
+        public void MoveToCenterAsync(Rectangle client, CancellationToken token)
         {
-            if (_isHidden) return;
-
-            if (_destination.X == 0 && _destination.Y == 0) CalculateDestination(client);
-            int xDistance = Math.Abs(_destination.X - _x);
-            int yDistance = Math.Abs(_destination.Y - _y);
-            if (xDistance <= _dx && yDistance <= _dy)
-            {
-                OnCenterReached(client);
-                return;
-            }
-            if (xDistance > yDistance)
-            {
-                if (_destination.X > _x)
-                    MoveRight();
-                else MoveLeft();
-            }
-            else
-            {
-                if (_destination.Y > _y)
-                    MoveDown();
-                else MoveUp();
-            }
-        }
-        public void OnCenterReached(Rectangle client)
-        {
-            if (CenterReached == null) return;
-
-            foreach (Delegate del in CenterReached.GetInvocationList())
-            {
-                Action<Rectangle> act = (Action<Rectangle>)del;
-                if (act != null) act.Invoke(client);
-            }
-        }
-        //лаба 2
-        public void MoveToCenterAsync(object _client)
-        {
-            Rectangle client = (Rectangle)_client;
             while (!_centerReached)
             {
                 if (_isHidden)
@@ -81,7 +45,7 @@ namespace tp2
                 int yDistance = Math.Abs(_destination.Y - _y);
                 if (xDistance <= _dx && yDistance <= _dy)
                 {
-                    OnCenterReachedAsync(client);
+                    OnCenterReachedAsync(client, token);
                     return;
                 }
                 if (xDistance > yDistance)
@@ -100,17 +64,19 @@ namespace tp2
                 Thread.Sleep(_period);
             }
         }
-        public void OnCenterReachedAsync(Rectangle client)
+        public void OnCenterReachedAsync(Rectangle client, CancellationToken token)
         {
             if (CenterReached == null) return;
 
-            Task.Factory.StartNew(() => Parallel.ForEach(CenterReached.GetInvocationList(),
-                (del) =>
-                {
-                    Action<Rectangle> act = (Action<Rectangle>)del;
-                    if (act != null) act.Invoke(client);
-                }
-            ));
+            ParallelOptions parOpts = new ParallelOptions();
+            parOpts.CancellationToken = token;
+
+            Parallel.Invoke(parOpts, new Action[] {
+                () => ((Action<Rectangle, CancellationToken>)CenterReached.GetInvocationList()[0]).Invoke(client, token),
+                () => ((Action<Rectangle, CancellationToken>)CenterReached.GetInvocationList()[1]).Invoke(client, token),
+                () => ((Action<Rectangle, CancellationToken>)CenterReached.GetInvocationList()[2]).Invoke(client, token),
+                () => ((Action<Rectangle, CancellationToken>)CenterReached.GetInvocationList()[3]).Invoke(client, token)
+            });
 
             _centerReached = true;
         }

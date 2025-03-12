@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Threading;
+using System.Threading.Tasks;
 
-namespace tp2
+namespace tp3
 {
     internal class HideNSeek
     {
@@ -13,6 +14,8 @@ namespace tp2
         private Form _form;
         private System.Windows.Forms.Timer _timer;
         private Button _timerButton;
+        private CancellationTokenSource _cancelToken; //лаба 3
+        private Button _cancelButton;
 
         public HideNSeek(Form form)
         {
@@ -37,8 +40,9 @@ namespace tp2
             _timerButton = new System.Windows.Forms.Button();
             _timer.Enabled = false;
             _timer.Tick += new EventHandler(TimerTick);
+            _cancelButton = new System.Windows.Forms.Button();
             //
-            // button
+            // timer button
             //
             _timerButton.Location = new System.Drawing.Point(532, 112);
             _timerButton.Name = "button1";
@@ -48,19 +52,31 @@ namespace tp2
             _timerButton.UseVisualStyleBackColor = true;
             _timerButton.Click += new EventHandler(TimerButton_Click);
             _form.Controls.Add(_timerButton);
+            //
+            // cancel button
+            //
+            _cancelButton.Location = new System.Drawing.Point(532, 152);
+            _cancelButton.Name = "button2";
+            _cancelButton.Size = new System.Drawing.Size(79, 39);
+            _cancelButton.TabIndex = 0;
+            _cancelButton.Text = "отмена движения";
+            _cancelButton.UseVisualStyleBackColor = true;
+            _cancelButton.Click += new EventHandler(CancelButton_Click);
+            _form.Controls.Add(_cancelButton);
 
             _form.Resize += new EventHandler(FormResize);
             // для асинхронности добавить обработчик Load
             _form.Load += new EventHandler(FormLoad);
 
             _form.ResumeLayout(false);
+
+            _cancelToken = new CancellationTokenSource();
         }
 
         public void Start()
         {
             foreach (Circle c in _circles)
             {
-                //_rectangle.CenterReached += c.MoveToBorder;
                 _rectangle.CenterReached += c.MoveToBorderAsync;
                 _form.Paint += c.Draw;
                 c.StatusChanged += ShowStatus;
@@ -70,7 +86,6 @@ namespace tp2
 
         private void TimerTick(object sender, EventArgs e)
         {
-            //_rectangle.MoveToCenter(_form.ClientRectangle); // для лабы 2 не надо
             _form.Invalidate();
         }
         private void TimerButton_Click(object sender, EventArgs e)
@@ -92,10 +107,10 @@ namespace tp2
         }
         private void FormLoad(object sender, EventArgs e)   //лаба 2
         {
-            ThreadPool.QueueUserWorkItem(new WaitCallback(_rectangle.MoveToCenterAsync), _form.ClientRectangle);
+            Task.Factory.StartNew(() => _rectangle.MoveToCenterAsync(_form.ClientRectangle, _cancelToken.Token));   //лаба 3
         }
-        private string status;
-        private void ShowStatus(string _status)
+        private string status;  //лаба 2
+        private void ShowStatus(string _status) //лаба 2
         {
             status += _status;
             _form.Invoke((Action)delegate 
@@ -103,6 +118,14 @@ namespace tp2
                     _form.Text = status;
                 }
             );
+        }
+        private void CancelButton_Click(object sender, EventArgs e) //лаба 3
+        {
+            if (_timer.Enabled)
+            {
+                _cancelButton.Enabled = !_cancelButton.Enabled;
+                _cancelToken.Cancel();
+            }
         }
     }
 }

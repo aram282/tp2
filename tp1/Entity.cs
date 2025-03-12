@@ -2,7 +2,7 @@
 using System.Windows.Forms;
 using System.Drawing;
 
-namespace tp2
+namespace tp3
 {
     abstract class Entity : IEntity
     {
